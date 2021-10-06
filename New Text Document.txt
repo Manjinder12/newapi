@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+    stages {
+       
+          stage('Get all') {
+            steps {
+               git credentialsId: '63400cf3-de34-4a85-980b-befd8dae930f', url: 'git@bitbucket.org:moresand/moreroomfrontend.git'
+            }
+        }
+        
+         stage('Build in Docker') {
+             steps {
+            
+                sshagent(credentials:['27983fa9-89f2-4d52-9d43-fc4a3d7caee2']) {
+                 
+               sh """ssh -o StrictHostKeyChecking=no  manjinder@192.168.22.67 << EOF
+               sudo su
+               cd /usr/local/src/moreroomfrontend/MoreRoomsFrontend/  
+               git checkout master
+               git pull                                           
+               sudo make ENV=DEV rebuild
+               exit
+               exit
+                
+              
+    EOF"""
+    
+                }               
+              }
+        }
+    }
+post {
+         failure {
+             //def console_output = "${env.BUILD_URL}/console"
+             mail bcc: '', body: "Details: ${env.JOB_NAME} Build Number: ${env.BUILD_NUMBER} Build: ${env.BUILD_URL} Console Output: ${env.BUILD_URL}/console", cc: '', from: 'jenkins@moresanddc.uk', replyTo: '', subject: 'Failing UIVeri5 Tests', to: 'manjinder@crystaltravel.co.uk,anjali@crystaltravel.co.uk,sumit.mor@crystaltravel.co.uk'
+         }
+         unstable {
+             mail bcc: '', body: "Details: ${env.JOB_NAME} Build Number: ${env.BUILD_NUMBER} Build: ${env.BUILD_URL} Console Output: ${env.BUILD_URL}/console", cc: '', from: 'jenkins@moresanddc.uk', replyTo: '', subject: 'Failing UIVeri5 Tests', to: 'manjinder@crystaltravel.co.uk,anjali@crystaltravel.co.uk,sumit.mor@crystaltravel.co.uk'
+         }
+     }
+}
